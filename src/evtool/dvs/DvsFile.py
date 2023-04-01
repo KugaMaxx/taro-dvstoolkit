@@ -4,6 +4,7 @@ import os.path as osp
 
 from dv import AedatFile
 import numpy.lib.recfunctions as rfn
+from scipy.io import savemat
 
 from evtool.utils.func import to_unit_frame
 from evtool.dtype import Event, Frame, Size, Data
@@ -35,13 +36,15 @@ class Load:
 
             # events
             if 'events' in f.names:
-                array_ev = np.hstack([packet for packet in f['events'].numpy()])
+                array_ev = np.hstack(
+                    [packet for packet in f['events'].numpy()])
                 array_ev = rfn.structured_to_unstructured(array_ev)[..., :4]
                 data['events'] = Event(array_ev)
 
             # frames
             if 'frames' in f.names:
-                array_fr = [(frame.timestamp, to_unit_frame(frame.image)) for frame in f['frames']]
+                array_fr = [(frame.timestamp, to_unit_frame(frame.image))
+                            for frame in f['frames']]
                 data['frames'] = Frame(array_fr)
 
         return data
@@ -56,9 +59,6 @@ class Load:
             array_ev = pd.read_csv(f, sep='\s+', header=None).values
             data['events'] = Event(array_ev)
 
-            # frames
-            data["frames"] = Frame()
-
         return data
 
 
@@ -71,6 +71,8 @@ class Save:
             pass
         elif extention == '.txt':
             return Save.to_txt(data, path)
+        elif extention == '.mat':
+            return Save.to_mat(data, path)
 
     @staticmethod
     def to_txt(data: Data, path):
@@ -80,11 +82,31 @@ class Save:
             np.savetxt(f, rfn.structured_to_unstructured(data['events']),
                        fmt='%16d %3d %3d %1d', delimiter=' ', newline='\n')
 
+    @staticmethod
+    def to_mat(data: Data, path):
+        class Struct:
+            pass
+        events = Struct()
+        frames = Struct()
+
+        events.timestamp = data['events'].timestamp
+        events.x = data['events'].x
+        events.y = data['events'].y
+        events.polarity = data['events'].polarity
+
+        if 'frames' in data.keys():
+            frames.timestamp = data['frames'].timestamp
+            frames.image = data['frames'].image
+
+        savemat(path, {'events': events, 'frames': frames,
+                'sizeX': data['size'][0], 'sizeY': data['size'][1]})
+
 
 class DvsFile:
     @staticmethod
     def load(path) -> Data:
         return Load.from_file(path)
 
-    def save(self) -> Data:
-        pass
+    @staticmethod
+    def save(data: Data, path) -> Data:
+        Save.to_file(data, path)
