@@ -22,11 +22,11 @@ class Player(object):
 
     def view(self, duration='inf', use_aps=True):
         fig, pre = self._init_package(duration)
-        fig.set_subplot(rows=1, cols=2, specs=[[{"type": "3d"}, {"type": "2d"}]])
-        fig.append_trace(row=1, col=1, func=pre.plot_3d_frame, kwargs=pre.set_3d_plot) if use_aps else None
-        fig.append_trace(row=1, col=1, func=pre.plot_3d_event, kwargs=pre.set_3d_plot)
-        fig.append_trace(row=1, col=2, func=pre.plot_2d_frame, kwargs=pre.set_2d_plot) if use_aps else None
-        fig.append_trace(row=1, col=2, func=pre.plot_2d_event, kwargs=pre.set_2d_plot)
+        fig.set_subplot(rows=1, cols=2, specs=[[{"type": "2d"}, {"type": "3d"}]])
+        fig.append_trace(row=1, col=1, func=pre.plot_2d_frame, kwargs=pre.set_2d_plot) if use_aps else None
+        fig.append_trace(row=1, col=1, func=pre.plot_2d_event, kwargs=pre.set_2d_plot)
+        fig.append_trace(row=1, col=2, func=pre.plot_3d_frame, kwargs=pre.set_3d_plot) if use_aps else None
+        fig.append_trace(row=1, col=2, func=pre.plot_3d_event, kwargs=pre.set_3d_plot)
         fig.show()
 
     def view_2d(self, duration="inf", use_aps=True):

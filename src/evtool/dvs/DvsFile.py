@@ -1,4 +1,5 @@
 import numpy as np
+import pickle
 import pandas as pd
 import os.path as osp
 
@@ -23,8 +24,10 @@ class Load:
 
         if extention == '.aedat4':
             return Load.from_aedat4(path)
-        if extention == '.txt':
+        elif extention == '.txt':
             return Load.from_txt(path)
+        elif extention == '.pkl':
+            return Load.from_pkl(path)
 
         raise ValueError(f"not support typy of {extention}")
 
@@ -60,6 +63,19 @@ class Load:
             data['events'] = Event(array_ev)
 
         return data
+    
+    
+    @staticmethod
+    def from_pkl(path: str) -> Data:
+        data = Data()
+        with open(path, "rb+") as f:
+            data['events'] = pd.read_pickle(f)['events']
+        with open(path, "rb+") as f:
+            data['frames'] = pd.read_pickle(f)['frames']
+        with open(path, "rb+") as f:
+            data['size'] = pd.read_pickle(f)['size']
+
+        return data
 
 
 class Save:
@@ -73,6 +89,8 @@ class Save:
             return Save.to_txt(data, path)
         elif extention == '.mat':
             return Save.to_mat(data, path)
+        elif extention == '.pkl':
+            return Save.to_pkl(data, path)
 
     @staticmethod
     def to_txt(data: Data, path):
@@ -80,7 +98,7 @@ class Save:
             f.write('%3d %3d\n' % data['size'])
         with open(path, 'at') as f:
             np.savetxt(f, rfn.structured_to_unstructured(data['events']),
-                       fmt='%16d %3d %3d %1d', delimiter=' ', newline='\n')
+                       fmt='%16d %3d %3d %1d', delimiter=' ', newline='\n')    
 
     @staticmethod
     def to_mat(data: Data, path):
@@ -100,6 +118,11 @@ class Save:
 
         savemat(path, {'events': events, 'frames': frames,
                 'sizeX': data['size'][0], 'sizeY': data['size'][1]})
+        
+    @staticmethod
+    def to_pkl(data: Data, path):
+        with open(path, 'wb+') as f:
+            pickle.dump(dict(events=data['events'], frames=data['frames'], size=data['size']), f)
 
 
 class DvsFile:

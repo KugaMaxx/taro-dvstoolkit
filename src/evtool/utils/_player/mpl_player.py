@@ -124,7 +124,7 @@ class Animator(FuncAnimation):
 
 class Figure(object):
     def __init__(self):
-        self._figure = plt.figure()
+        self._figure = plt.figure(figsize=(16, 9))
         self._traces = {
             "inds": list(),
             "rows": list(),
@@ -229,7 +229,8 @@ class Preset(object):
             obj = ax.imshow(np.zeros(self._size))
         else:
             ts, _ = self._packet[i]
-            _, data = self._frames.find_closest(ts)
+            closest_id = self._frames.find_closest(ts)
+            data = self._frames.image[closest_id]
             obj.set_data(np.flip(data, axis=0))
         return obj
 
@@ -238,7 +239,7 @@ class Preset(object):
         ax.set_ylim3d(0, self._size[0])
         ax.set_zlim3d(0, self._size[1])
         ax.set_box_aspect((500, self._size[0], self._size[1]))
-        ax.view_init(elev=-50, azim=-50, roll=-45)
+        ax.view_init(elev=35, azim=-10, roll=-95)
         return ax
 
     def plot_3d_frame(self, ax, obj=None, i=None):
@@ -248,7 +249,8 @@ class Preset(object):
         else:
             obj.remove()
             ts, _ = self._packet[i]
-            _, data = self._frames.find_closest(ts)
+            closest_id = self._frames.find_closest(ts)
+            data = self._frames.image[closest_id]
             obj = ax.plot_surface(ts, xx, yy, facecolors=cv2.cvtColor(data.astype(np.uint8), cv2.COLOR_RGB2RGBA) / 255.)
         return obj
 

@@ -166,7 +166,8 @@ class Preset(object):
             )
         else:
             ts, _ = self._packet[i]
-            _, data = self._frames.find_closest(ts)
+            closest_id = self._frames.find_closest(ts)
+            data = self._frames.image[closest_id]
             obj = go.Image(
                 z=data,
             )
@@ -216,7 +217,8 @@ class Preset(object):
             )
         else:
             ts, _ = self._packet[i]
-            _, data = self._frames.find_closest(ts)
+            closest_id = self._frames.find_closest(ts)
+            data = self._frames.image[closest_id]
             xx, yy = np.mgrid[0:self._size[0], 0:self._size[1]]
             obj = go.Surface(
                 x=xx,
