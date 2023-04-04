@@ -12,6 +12,7 @@ class Frame(np.recarray):
             structured_array = np.asarray(array, dtype).view(Frame)
         elif array.dtype.names is not None:
             structured_array = array.astype(dtype).view(Frame)
+        structured_array = np.sort(structured_array, order='timestamp')
         return structured_array
 
     def find_closest(self, t):

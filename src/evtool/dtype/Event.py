@@ -1,7 +1,5 @@
 from ._package import *
 from scipy.ndimage import median_filter
-import cv2
-
 
 def histogram(x, y, weight, size):
     _bins  = [size[0], size[1]]
@@ -34,6 +32,7 @@ class Event(np.recarray):
             structured_array = rfn.unstructured_to_structured(array, dtype).view(Event)
         elif array.dtype.names is not None:
             structured_array = array.astype(dtype).view(Event)
+        structured_array = np.sort(structured_array, order='timestamp')
         return structured_array
 
     def to_array(self):
@@ -72,7 +71,34 @@ class Event(np.recarray):
         seeker = np.where((counts - median_filter(counts, 3)).flatten() >= thres)
         idx = ~np.in1d(np.ravel_multi_index((self.x, self.y), size), seeker)
         return idx
-        
+    
+    def shot_noise(self, size, rate=5, down_sample=0.8):
+        # generate shot noise
+        from_ts, to_ts = self.timestamp[0], self.timestamp[-1]
+        lam = np.floor(rate * (to_ts - from_ts) * 1E-6)
+
+        @njit
+        def poisson(k):
+            num = np.random.poisson(lam)
+            if num > 0:
+                y, x = int(k / size[1]), int(k % size[1])
+                return [(random.randint(from_ts, to_ts), x, y, round(random.random()))
+                        for n in range(num)]
+            else:
+                return [(-1, -1, -1, -1)]
+
+        noise = Event(np.vstack([np.array(poisson(k))
+                                 for k in range(size[0] * size[1])]))
+        noise = noise[noise.timestamp > 0]
+
+        # down sample due to shot noise
+        index = np.random.randint(0, len(self), int(down_sample * len(self)))
+        self = np.sort(self[index], order='timestamp')
+
+        if noise.shape != 0:
+            noise = Event(np.hstack([self, noise]))
+
+        return noise
 
     def __repr__(self):
         return str(self.dtype)
