@@ -39,10 +39,14 @@ class Event(np.recarray):
     def to_array(self):
         return rfn.structured_to_unstructured(self)
 
-    def slice(self, t) -> Iterator[Tuple[Any, Self]]:
-        delta_t = to_timestamp(t)
-        ts_bin = np.arange(self.timestamp[0], self.timestamp[-1], delta_t).astype(np.int64)
+    def slice(self, delta_t, from_ts=-1, to_ts=-1) -> Iterator[Tuple[Any, Self]]:
+        delta_t = to_timestamp(delta_t)
+        from_ts = self.timestamp[0] if from_ts == -1 else from_ts
+        to_ts   = self.timestamp[-1] if to_ts == -1 else to_ts
+
+        ts_bin = np.arange(from_ts, to_ts, delta_t).astype(np.int64)
         index = np.searchsorted(self.timestamp, ts_bin[1:])
+        
         return zip(ts_bin, [ev for ev in np.split(self, index)])
 
     def project(self, size, mode='accumulate'):
