@@ -35,12 +35,9 @@ class Load:
     def from_aedat4(path: str) -> Data:
         data = Data()
         with AedatFile(path) as f:
-            data['size'] = Size(f['events'].size)
-
             # events
             if 'events' in f.names:
-                array_ev = np.hstack(
-                    [packet for packet in f['events'].numpy()])
+                array_ev = np.hstack([packet for packet in f['events'].numpy()])
                 array_ev = rfn.structured_to_unstructured(array_ev)[..., :4]
                 data['events'] = Event(array_ev)
 
@@ -49,6 +46,9 @@ class Load:
                 array_fr = [(frame.timestamp, to_unit_frame(frame.image))
                             for frame in f['frames']]
                 data['frames'] = Frame(array_fr)
+
+            # size
+            data['size'] = f['events'].size
 
         return data
 
@@ -69,11 +69,19 @@ class Load:
     def from_pkl(path: str) -> Data:
         data = Data()
         with open(path, "rb+") as f:
-            data['events'] = pd.read_pickle(f)['events']
-        with open(path, "rb+") as f:
-            data['frames'] = pd.read_pickle(f)['frames']
-        with open(path, "rb+") as f:
-            data['size'] = pd.read_pickle(f)['size']
+            pkl_dict = pd.read_pickle(f)
+
+        # events
+        if 'events' in pkl_dict.keys():
+            data['events'] = Event(pkl_dict['events'])
+
+        # frames
+        if 'frames' in pkl_dict.keys():
+            data['frames'] = Frame(pkl_dict['frames'])
+
+        # size
+        if 'size' in pkl_dict.keys():
+            data['size'] = Size(pkl_dict['size'])
 
         return data
 
@@ -104,25 +112,42 @@ class Save:
     def to_mat(data: Data, path):
         class Struct:
             pass
+
+        # events
         events = Struct()
+        if 'events' in data.keys():
+            events.timestamp = data['events'].timestamp
+            events.x = data['events'].x
+            events.y = data['events'].y
+            events.polarity = data['events'].polarity
+
+        # frames
         frames = Struct()
-
-        events.timestamp = data['events'].timestamp
-        events.x = data['events'].x
-        events.y = data['events'].y
-        events.polarity = data['events'].polarity
-
         if 'frames' in data.keys():
             frames.timestamp = data['frames'].timestamp
             frames.image = data['frames'].image
 
         savemat(path, {'events': events, 'frames': frames,
-                'sizeX': data['size'][0], 'sizeY': data['size'][1]})
+                        'sizeX': data['size'][0], 'sizeY': data['size'][1]})
         
     @staticmethod
     def to_pkl(data: Data, path):
         with open(path, 'wb+') as f:
-            pickle.dump(dict(events=data['events'], frames=data['frames'], size=data['size']), f)
+            pickle_dict = dict(size=data['size'])
+
+            # events
+            if 'events' in data.keys():
+                pickle_dict['events'] = data['events']
+
+            # frames
+            if 'frames' in data.keys():
+                pickle_dict['frames'] = data['frames']
+
+            # size
+            if 'size' in data.keys():
+                pickle_dict['size'] = data['size']
+
+            pickle.dump(pickle_dict, f)
 
 
 class DvsFile:
