@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 import pandas as pd
 from pint import UnitRegistry
@@ -11,7 +12,9 @@ def to_timestamp(timestamp: str, to_unit='us'):
 
 
 def to_unit_frame(image):
-    return np.dstack((image,)*3)
+    if image.shape[2] == 1:
+        image = np.dstack((image,)*3)
+    return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
 
 def to_datetime(timestamp, to_format="%S.%f"):
