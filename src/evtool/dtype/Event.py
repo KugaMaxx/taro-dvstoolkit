@@ -49,20 +49,22 @@ class Event(np.recarray):
         return zip(ts_bin, [ev for ev in np.split(self, index)])
 
     def project(self, size, mode='accumulate'):
-        if mode == 'accumulate':
+        # w/ polar
+        if mode == 'polar':
             counts = histogram(self.x, self.y, (-1) ** (1 + self.polarity), size)
             return counts
-
+        
+        # w/o polar
         elif mode == 'monopolar':
             counts = histogram(self.x, self.y, (+1) ** (1 + self.polarity), size)
             return counts
-
-        elif mode == 'bipolar':
-            pos_index = self.polarity == 1
-            neg_index = self.polarity == 0
-            pos_counts = histogram(self.x[pos_index], self.y[pos_index], (+1) ** (1 + self.polarity[pos_index]), size)
-            neg_counts = histogram(self.x[neg_index], self.y[neg_index], (-1) ** (1 + self.polarity[neg_index]), size)
-            return pos_counts, neg_counts
+        
+        # count before polar assignment
+        elif mode == 'accumulate':
+            counts = histogram(self.x, self.y, (+1) ** (1 + self.polarity), size)
+            weight = np.zeros(size)
+            weight[self.x, self.y] = (-1) ** (1 + self.polarity)
+            return counts * weight
 
         return None
     
