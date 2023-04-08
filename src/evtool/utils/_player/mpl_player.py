@@ -202,7 +202,7 @@ class Preset(object):
         self._delta_t = to_timestamp(duration) if 'inf' not in duration else self._events.timestamp[-1] - self._events.timestamp[0]
         self._ticks = [f'{to_datetime(ts)[:-4]}s' for ts, _ in self._packet]
 
-        self._max_sampler = lambda x: x[::np.ceil(len(x) / max_sample).astype(int)]
+        self._max_sampler = lambda x: x[::np.ceil(len(x) / max_sample).astype(int)] if len(x) > 0 else x
         self._fr_colormap = plt.get_cmap('gray')
         self._ev_color_map = mcolors.LinearSegmentedColormap.from_list("evCmap", [(0.871, 0.286, 0.247, 1.),
                                                                                   (0.000, 0.000, 0.000, 0.),

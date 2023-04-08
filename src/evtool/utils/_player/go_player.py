@@ -125,11 +125,8 @@ class Preset(object):
         self._packet: list  = [(ts, ev) for ts, ev in self._events.slice(duration)]
         self._delta_t = to_timestamp(duration) if 'inf' not in duration else self._events.timestamp[-1] - self._events.timestamp[0]
         self._ticks = [f'{to_datetime(ts)[:-4]}s' for ts, _ in self._packet]
-        
-        self._events.x = self._size[0] - self._events.x - 1
-        self._frames.image = np.flip(self._frames.image, axis=1)
 
-        self._max_sampler = lambda x: x[::np.ceil(len(x)/max_sample).astype(int)]
+        self._max_sampler = lambda x: x[::np.ceil(len(x)/max_sample).astype(int)] if len(x) > 0 else x
         self._fr_colormap = 'gray'
         self._ev_colormap = [[0.0, "rgba(223,73,63,1)"],
                              [0.5, "rgba(0,0,0,0)"],
@@ -154,6 +151,7 @@ class Preset(object):
             )
         else:
             ts, data = self._packet[i]
+            data['x'] = self._size[0] - data['x'] - 1
             obj = go.Heatmap(
                 z=data.project(self._size),
             )
@@ -169,7 +167,7 @@ class Preset(object):
             closest_id = self._frames.find_closest(ts)
             data = self._frames.image[closest_id]
             obj = go.Image(
-                z=data,
+                z=np.flip(data, axis=0),
             )
         return obj
 
@@ -224,7 +222,7 @@ class Preset(object):
                 x=xx,
                 y=yy,
                 z=np.full(self._size, to_datetime(ts)),
-                surfacecolor=np.flip(data[..., 0], axis=1)
+                surfacecolor=np.flipud(np.fliplr(data[..., 0]))
             )
         return obj
 
