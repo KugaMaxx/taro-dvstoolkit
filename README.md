@@ -100,6 +100,12 @@ This package aims to provide a series of wrapped modules to help users to do sub
     data['events'] = data['events'][idx]
     ```
 
++ `shot_noise(size: Size, rate: int, down_sample: int)` generates shot noise events. It simulates the process of generating shot noise with Poisson distribution at fixed `rate` and downsamples raw events at `down_sample`.
+    ```python
+    # generate shot noise
+    data['events'] = data['events'].shot_noise(data['size'], rate=5, down_sample=0.8)
+    ```
+
 **Frame** stores Active Pixel Sensor (APS) outputs, including `timestamp` and `image`.
 
 + `find_closest(t: int)` finds the frame which is closet to timestamp `t`, returns the frame's timestamp and corresponding image.
@@ -108,7 +114,8 @@ This package aims to provide a series of wrapped modules to help users to do sub
     import matplotlib.pyplot as plt
 
     # find closet frame
-    timestamp, image = data['frames'].find_closest(randint(0, 1E16, 1))
+    idx = data['frames'].find_closest(randint(0, 1E16, 1))
+    timestamp, image = data['frames'][idx]
     
     # display frame closest to referred timestamp
     plt.imshow(image)
